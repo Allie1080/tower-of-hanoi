@@ -14,7 +14,7 @@ const int MAX_SIZE = 5;
 const std::string pillarOutOfRange = "That pillar is out of range!";
 const std::string tooManyArguments = "Too many arguments!";
 const std::string notInteger = "The provided arguments are not integers!";
-const std::string pillarFull = "That pillar is already fool!";
+const std::string pillarFull = "That pillar is already full!";
 // error messages
 
 void displayError (std::string error) {
@@ -55,7 +55,7 @@ void swapNumbers (int &num1, int &num2) {
     num2 = temp;
 }
 
-void makeRingsFall (std::stack<int> *pillars[]) {
+void makeRingsFall (std::array<std::stack<int>, 3> &pillars) {
     // for rendering purposes
     // just pass the array by pointer next time
     // if you're gonna pass-by-reference, declare the argument as a *const 
@@ -65,20 +65,29 @@ void makeRingsFall (std::stack<int> *pillars[]) {
 
 
     for (int pillarIndex{0}; pillarIndex < 3; pillarIndex++) {
-        int amountOfZeroesNeeded = 5 - pillars[pillarIndex]->size();
+        std::cout << "Layer " << pillarIndex << " is " << ((pillars[pillarIndex].empty()) ? "empty": "not empty") << '\n';
+        int layerSize = (!pillars[pillarIndex].empty()) ? pillars[pillarIndex].size() : 0;
+
+        int amountOfZeroesNeeded = 5 - layerSize;
+        std::cout << amountOfZeroesNeeded << '\n';
+
 
         if (amountOfZeroesNeeded == 0) {
             continue;
         }
 
         for (int layer{0}; layer < amountOfZeroesNeeded; layer++) {
-            pillars[pillarIndex]->push(0);
+            std::cout << pillarIndex << layer << '\n';
+            pillars[pillarIndex].push(0);
+            std::cout << pillarIndex << layer << '\n';
         }
     }
+    std::cout << "makeringsfall executed!" << '\n';
 }
 
-void displayPillars (std::stack<int> pillars[]) {
-    makeRingsFall(&pillars);
+void displayPillars (std::array<std::stack<int>, 3> pillars) {
+    std::cout << "First part of displayPillars executed!" << '\n';
+    makeRingsFall(pillars);
 
     for (int layer{0}; layer < 5; layer++) {
         std::cout << pillars[0].top() << " " << pillars[1].top() << " " << pillars[2].top() << '\n';
@@ -86,9 +95,11 @@ void displayPillars (std::stack<int> pillars[]) {
         pillars[1].pop();
         pillars[2].pop();
     }
+
+    std::cout << "Last part of displayPillars executed!" << '\n';
 }
 
-void moveRing (std::stack<int> (&pillars)[], int oldPillar, int targetPillar, std::stack<Event> &history, bool isUndo=false) {
+void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targetPillar, std::stack<Event> &history, bool isUndo=false) {
     // if isUndo, use frontHistory for history parameter
     if (oldPillar < 0 | oldPillar > 2 | targetPillar < 0 | targetPillar > 2) {
         displayError(pillarOutOfRange);
@@ -123,7 +134,7 @@ void solvePuzzle() {
     std::cout <<'\n';
 }
 
-void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<Event> &backHistory, std::stack<Event> &frontHistory) {
+void parseInput (std::string input, std::array<std::stack<int>, 3> &pillars, std::stack<Event> &backHistory, std::stack<Event> &frontHistory) {
     std::stringstream inputStream(input);
     std::string variable;
     std::string inputArray[64];
@@ -171,7 +182,7 @@ void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<Eve
 }
 
 int main () {
-    std::stack<int> pillars[3];
+    std::array<std::stack<int>, 3> pillars;
     std::stack<Event> backHistory;
     std::stack<Event> frontHistory;
 
@@ -182,6 +193,14 @@ int main () {
     pillars[0].push(1);
 
     displayPillars(pillars);
+
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
+    moveRing(pillars, 0, 2, backHistory);
 
 
 }
