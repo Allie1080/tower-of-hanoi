@@ -40,7 +40,7 @@ int convertStringToInt(std::string text) {
     return number;
 }
 
-void parseInput (std::string input, std::stack<int> pillars[]) {
+void parseInput (std::string input, std::stack<int> pillars[], std::stack<int[2]> &backHistory, std::stack<int[2]> &frontHistory) {
     std::stringstream inputStream(input);
     std::string variable;
     std::string inputArray[64];
@@ -58,13 +58,19 @@ void parseInput (std::string input, std::stack<int> pillars[]) {
         solvePuzzle();
     
     } else if (inputArray[0] == "-m" | inputArray[0] == "--move") {
-        if (!isdigit(inputArray[1])) {
+        if (!isdigit(inputArray[1]) | !isdigit(inputArray[2])) {
             displayError(notInteger);
             return;
         }
-        moveRing(pillars, convertStringToInt(inputArray[1]), convertStringToInt(inputArray[2]));
 
-    }
+        int oldPillar = convertStringToInt(inputArray[1]);
+        int targetPillar = convertStringToInt(inputArray[2]);
+
+        moveRing(pillars, oldPillar, targetPillar, backHistory);
+    
+    } else if (inputArray[0] == "-r" | inputArray[0] == "--redo") {
+        
+    } 
 }
 
 void displayPillars (std::stack<int> pillars[]) {
@@ -76,10 +82,19 @@ void displayPillars (std::stack<int> pillars[]) {
     }
 }
 
-void moveRing (std::stack<int> pillars[], int oldPillar, int targetPillar) {
+void moveRing (std::stack<int> pillars[], int &oldPillar, int &targetPillar, std::stack<int[2]> &history, bool isUndo=false) {
+    // if isUndo, use frontHistory for history parameter
     if (oldPillar < 0 | oldPillar > 2 | targetPillar < 0 | targetPillar > 2) {
         displayError(pillarOutOfRange);
     }
+
+    if (isUndo) {
+
+    } else {
+    
+    }
+
+    history.push({oldPillar, targetPillar});
 
 }
 
@@ -89,7 +104,8 @@ void solvePuzzle() {
 
 int main () {
     std::stack<int> pillars[3];
-    std::stack<int> backHistory[64][2];
+    std::stack<int[2]> backHistory;
+    std::stack<int[2]> frontHistory;
 
     for (int index{0}; index < 3; index++) {
         for (int counter{0}; counter < 5; counter++) {
