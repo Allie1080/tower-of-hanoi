@@ -4,6 +4,12 @@
 #include <stack>
 #include <array>
 
+struct Event {
+    // i dont think its always gonna be applicable, but dont use arrays for stuff that can just be this again
+    int oldPillar;
+    int targetPillar;
+};
+
 const int MAX_SIZE = 5; 
 const std::string pillarOutOfRange = "That pillar is out of range!";
 const std::string tooManyArguments = "Too many arguments!";
@@ -82,7 +88,7 @@ void displayPillars (std::stack<int> pillars[]) {
     }
 }
 
-void moveRing (std::stack<int> (&pillars)[], int oldPillar, int targetPillar, std::stack<int[2]> &history, bool isUndo=false) {
+void moveRing (std::stack<int> (&pillars)[], int oldPillar, int targetPillar, std::stack<Event> &history, bool isUndo=false) {
     // if isUndo, use frontHistory for history parameter
     if (oldPillar < 0 | oldPillar > 2 | targetPillar < 0 | targetPillar > 2) {
         displayError(pillarOutOfRange);
@@ -101,7 +107,7 @@ void moveRing (std::stack<int> (&pillars)[], int oldPillar, int targetPillar, st
     
     }
 
-    int event[2] = {oldPillar, targetPillar};
+    Event event = {oldPillar, targetPillar};
 
     pillars[targetPillar].push(pillars[oldPillar].top());
     pillars[oldPillar].pop();
@@ -117,7 +123,7 @@ void solvePuzzle() {
     std::cout <<'\n';
 }
 
-void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<int[2]> &backHistory, std::stack<int[2]> &frontHistory) {
+void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<Event> &backHistory, std::stack<Event> &frontHistory) {
     std::stringstream inputStream(input);
     std::string variable;
     std::string inputArray[64];
@@ -155,8 +161,8 @@ void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<int
             return;
         }
 
-        int oldPillar = backHistory.top()[0];
-        int targetPillar = backHistory.top()[1];
+        int oldPillar = backHistory.top().oldPillar;
+        int targetPillar = backHistory.top().targetPillar;
 
         moveRing(pillars, oldPillar, targetPillar, frontHistory, true);
         backHistory.pop();    
@@ -166,8 +172,8 @@ void parseInput (std::string input, std::stack<int> (&pillars)[], std::stack<int
 
 int main () {
     std::stack<int> pillars[3];
-    std::stack<std::array<int, 2>> backHistory;
-    std::stack<std::array<int, 2>> frontHistory;
+    std::stack<Event> backHistory;
+    std::stack<Event> frontHistory;
 
     pillars[0].push(5);
     pillars[0].push(4);
