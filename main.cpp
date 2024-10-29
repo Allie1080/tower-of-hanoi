@@ -63,6 +63,25 @@ void swapNumbers (int &num1, int &num2) {
     num2 = temp;
 }
 
+void displayHistory(std::stack<Event> history) {
+    if (history.empty()) {
+        return;
+
+    }
+
+    const int historySize = history.size();
+    // remember not to use conditions based on something that'd be affected by your loop
+
+    std::cout << "Size: " << history.size() << '\n';
+
+    for (int counter{0}; counter < historySize; counter++) {
+        std::cout << counter << history.top().oldPillar << " -> " << history.top().targetPillar << '\n';
+        history.pop();
+    }
+
+    std::cout << '\n';
+}
+
 void makeRingsFall (std::array<std::stack<int>, 3> &pillars) {
     // for rendering purposes
     // just pass the array by pointer next time
@@ -122,6 +141,9 @@ void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targe
 
     }
 
+    history.push({oldPillar, targetPillar});
+    // not affected by isUndo
+
     if (isUndo) {
         swapNumbers(oldPillar, targetPillar);
     
@@ -129,8 +151,6 @@ void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targe
 
     pillars[targetPillar].push(pillars[oldPillar].top());
     pillars[oldPillar].pop();
-
-    history.push({oldPillar, targetPillar});
 
     displayPillars(pillars);
 
@@ -144,7 +164,13 @@ void solvePuzzle() {
 void timeTravel(int repeatAmount, std::array<std::stack<int>, 3> &pillars, std::stack<Event> &utilizedHistory, std::stack<Event> &affectedHistory, bool isRedo=false) {
     if (repeatAmount > utilizedHistory.size()) {
         repeatAmount = utilizedHistory.size();
-        std::cout << "Can only " << ((isRedo) ? "redo" : "undo" ) << " " << repeatAmount << "/" << utilizedHistory.size() << " actions..." << '\n';
+
+        if (repeatAmount == 0) {
+            displayError((isRedo) ? redoEmpty : undoEmpty);
+            return;
+        }
+
+        std::cout << "Can only " << ((isRedo) ? "redo" : "undo" ) << " " << repeatAmount << " actions..." << '\n';
 
     } else {
         std::cout << ((isRedo) ? "Redo" : "Undo") << "ing " << repeatAmount << "actions.." << '\n';
@@ -156,13 +182,15 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, 3> &pillars, std::
     delay(500);
     
     for (int counter{0}; counter < repeatAmount; counter++) {
-        std::cout << "Time Travel" << counter << " " << utilizedHistory.top().oldPillar << " " << utilizedHistory.top().targetPillar << '\n';
+        std::cout << '\n';
         int oldPillar = utilizedHistory.top().oldPillar;
         int targetPillar = utilizedHistory.top().targetPillar;
 
-        moveRing(pillars, oldPillar, targetPillar, utilizedHistory, !isRedo);
-        utilizedHistory.pop();    
-        std::cout << "Time Travel" << counter << " " << utilizedHistory.top().oldPillar << " " << utilizedHistory.top().targetPillar << '\n';
+        moveRing(pillars, oldPillar, targetPillar, affectedHistory, !isRedo);
+        utilizedHistory.pop();  
+        /////std::cout << "Time Travel" << counter << '\n';
+        /////displayHistory(utilizedHistory);
+        /////displayHistory(affectedHistory);
         delay(250);
     }
 }
