@@ -17,8 +17,10 @@ const std::string pillarOutOfRange = "That pillar is out of range!";
 const std::string tooManyArguments = "Too many arguments!";
 const std::string notInteger = "The provided arguments are not integers!";
 const std::string pillarFull = "That pillar is already full!";
+const std::string pillarEmpty = "That pillar is empty!";
 const std::string undoEmpty = "There is nothing to undo!";
 const std::string redoEmpty = "There is nothing to redo!";
+const std::string invalidCommand = "Invalid command!";
 // error messages
 
 void delay(int milliseconds) {
@@ -64,6 +66,8 @@ void swapNumbers (int &num1, int &num2) {
 }
 
 void displayHistory(std::stack<Event> history) {
+    // mostly just for debugging
+
     if (history.empty()) {
         return;
 
@@ -95,7 +99,7 @@ void makeRingsFall (std::array<std::stack<int>, 3> &pillars) {
         ////std::cout << "Layer " << pillarIndex << " is " << ((pillars[pillarIndex].empty()) ? "empty": "not empty") << '\n';
         int layerSize = (!pillars[pillarIndex].empty()) ? pillars[pillarIndex].size() : 0;
 
-        int amountOfZeroesNeeded = 5 - layerSize;
+        int amountOfZeroesNeeded = MAX_SIZE - layerSize + 1;
         /////std::cout << amountOfZeroesNeeded << '\n';
 
 
@@ -112,12 +116,43 @@ void makeRingsFall (std::array<std::stack<int>, 3> &pillars) {
     /////std::cout << "makeringsfall executed!" << '\n';
 }
 
+std::string displayRing (int ringSize) {
+    std::stringstream ring;
+    int spaces = MAX_SIZE - ringSize;
+
+    for (int counter{0}; counter < spaces; counter++) {
+        ring << " ";
+    }
+
+    if (ringSize == 0) {
+        ring << "||";
+    
+    } else {
+        for (int counter{0}; counter < ringSize; counter++) {
+            ring << "[";
+        }
+
+        ring << "0" << ringSize;
+
+        for (int counter{0}; counter < ringSize; counter++) {
+            ring << "]";
+        }
+
+    }
+
+    for (int counter{0}; counter < spaces; counter++) {
+        ring << " ";
+    }
+
+    return ring.str();
+}
+
 void displayPillars (std::array<std::stack<int>, 3> pillars) {
     //////std::cout << "First part of displayPillars executed!" << '\n';
     makeRingsFall(pillars);
 
-    for (int layer{0}; layer < 5; layer++) {
-        std::cout << pillars[0].top() << " " << pillars[1].top() << " " << pillars[2].top() << '\n';
+    for (int layer{0}; layer < MAX_SIZE + 1; layer++) {
+        std::cout << displayRing(pillars[0].top()) << " " << displayRing(pillars[1].top()) << " " << displayRing(pillars[2].top()) << '\n';
         pillars[0].pop();
         pillars[1].pop();
         pillars[2].pop();
@@ -129,6 +164,16 @@ void displayPillars (std::array<std::stack<int>, 3> pillars) {
 
 void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targetPillar, std::stack<Event> &history, bool isUndo=false) {
     // if isUndo, use frontHistory for history parameter
+    history.push({oldPillar, targetPillar});
+    // not affected by isUndo
+
+    /////std::cout << oldPillar << " -> " << targetPillar << '\n';
+
+    if (isUndo) {
+        swapNumbers(oldPillar, targetPillar);
+    
+    }
+
     if (oldPillar < 0 | oldPillar > 2 | targetPillar < 0 | targetPillar > 2) {
         displayError(pillarOutOfRange);
         return;
@@ -139,14 +184,10 @@ void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targe
         displayError(pillarFull);
         return;
 
-    }
+    } else if (pillars[oldPillar].empty()) {
+        displayError(pillarEmpty);
+        return;
 
-    history.push({oldPillar, targetPillar});
-    // not affected by isUndo
-
-    if (isUndo) {
-        swapNumbers(oldPillar, targetPillar);
-    
     }
 
     pillars[targetPillar].push(pillars[oldPillar].top());
@@ -173,7 +214,7 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, 3> &pillars, std::
         std::cout << "Can only " << ((isRedo) ? "redo" : "undo" ) << " " << repeatAmount << " actions..." << '\n';
 
     } else {
-        std::cout << ((isRedo) ? "Redo" : "Undo") << "ing " << repeatAmount << "actions.." << '\n';
+        std::cout << ((isRedo) ? "Redo" : "Undo") << "ing " << repeatAmount << " actions.." << '\n';
     
     }
 
@@ -223,7 +264,7 @@ void parseInput (std::string input, std::array<std::stack<int>, 3> &pillars, std
         int oldPillar = convertStringToInt(inputArray[1]);
         int targetPillar = convertStringToInt(inputArray[2]);
 
-        moveRing(pillars, oldPillar, targetPillar, backHistory);
+        moveRing(pillars, --oldPillar, --targetPillar, backHistory);
     
     } else if (inputArray[0] == "-u" | inputArray[0] == "--undo") {
         if (inputArray[1].size() == 0) {
@@ -252,6 +293,9 @@ void parseInput (std::string input, std::array<std::stack<int>, 3> &pillars, std
         int repeatAmount = convertStringToInt(inputArray[1]);
 
         timeTravel(repeatAmount, pillars, frontHistory, backHistory, true);
+
+    } else {
+        displayError(invalidCommand);
 
     }
 }
