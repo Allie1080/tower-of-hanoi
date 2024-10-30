@@ -152,11 +152,23 @@ void displayPillars (std::array<std::stack<int>, 3> pillars) {
     makeRingsFall(pillars);
 
     for (int layer{0}; layer < MAX_SIZE + 1; layer++) {
-        std::cout << displayRing(pillars[0].top()) << " " << displayRing(pillars[1].top()) << " " << displayRing(pillars[2].top()) << '\n';
+        std::cout << " " << displayRing(pillars[0].top()) << " " << displayRing(pillars[1].top()) << " " << displayRing(pillars[2].top()) << '\n';
         pillars[0].pop();
         pillars[1].pop();
         pillars[2].pop();
+        
     }
+
+    for (int counter{0}; counter < ((MAX_SIZE + 1) * 6) + 4; counter++) {
+        // 1 for the ringSize (where MAX_SIZE is incremented by 1 to be able to dispaly the ring size number)
+        // 6 is 2 * 3
+        // 2 cause ringSize uses MAX_SIZE twice
+        // 3 cause there's 3 rings
+        // 4 for the extra spaces between the ring pillars
+        std::cout << "=";
+    }
+
+    std::cout << '\n';
 
     std::cout << '\n';
     /////std::cout << "Last part of displayPillars executed!" << '\n';
@@ -176,16 +188,16 @@ void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targe
         return;
 
     }
-
-    if (pillars[targetPillar].size() == MAX_SIZE) {
-        displayError(pillarFull);
-        return;
-
-    } else if (pillars[oldPillar].empty()) {
+    
+    if (pillars[oldPillar].empty()) {
         displayError(pillarEmpty);
         return;
 
-    }
+    } else if (pillars[targetPillar].size() == MAX_SIZE) {
+        displayError(pillarFull);
+        return;
+
+    } 
 
     pillars[targetPillar].push(pillars[oldPillar].top());
     pillars[oldPillar].pop();
