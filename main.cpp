@@ -164,10 +164,7 @@ void displayPillars (std::array<std::stack<int>, 3> pillars) {
 
 void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targetPillar, std::stack<Event> &history, bool isUndo=false) {
     // if isUndo, use frontHistory for history parameter
-    history.push({oldPillar, targetPillar});
-    // not affected by isUndo
-
-    /////std::cout << oldPillar << " -> " << targetPillar << '\n';
+    //std::cout << "Move is " << oldPillar << " -> " << targetPillar << '\n';
 
     if (isUndo) {
         swapNumbers(oldPillar, targetPillar);
@@ -195,6 +192,13 @@ void moveRing (std::array<std::stack<int>, 3> &pillars, int oldPillar, int targe
 
     displayPillars(pillars);
 
+    if (isUndo) {
+        swapNumbers(oldPillar, targetPillar);
+        // for recording history
+
+    }
+
+    history.push({oldPillar, targetPillar});
 }
 
 void solvePuzzle() {
