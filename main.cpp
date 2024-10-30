@@ -17,6 +17,11 @@ struct History {
     std::stack<Event> &backHistory;
 };
 
+struct MoveType {
+    bool isUndo{false};
+    bool isRedo{false};
+};
+
 const int PILLAR_MAX_SIZE = 7; 
 const int PILLAR_AMOUNT = 4;
 
@@ -92,6 +97,19 @@ void displayHistory(std::stack<Event> history) {
     }
 
     std::cout << '\n';
+}
+
+void clearHistory (std::stack<Event> &history) {
+    if (history.empty()) {
+        return;
+
+    }
+
+    int historySize = history.size();
+    
+    for (int counter{0}; counter < historySize; counter++) {
+        history.pop();
+    }
 }
 
 void makeRingsFall (std::array<std::stack<int>, PILLAR_AMOUNT> &pillars) {
@@ -181,11 +199,10 @@ void displayPillars (std::array<std::stack<int>, PILLAR_AMOUNT> pillars) {
     /////std::cout << "Last part of displayPillars executed!" << '\n';
 }
 
-void moveRing (std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, int oldPillar, int targetPillar, std::stack<Event> &history, bool &undoUsed, bool isUndo=false) {
-    // if isUndo, use frontHistory for history parameter
+void moveRing (std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, int oldPillar, int targetPillar, History &history, bool &undoUsed, MoveType moveType) {
     //std::cout << "Move is " << oldPillar << " -> " << targetPillar << '\n';
 
-    if (isUndo) {
+    if (moveType.isUndo) {
         swapNumbers(oldPillar, targetPillar);
         undoUsed = true;
         std::cout << "Used undo!" << '\n';
@@ -214,13 +231,23 @@ void moveRing (std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, int oldPilla
 
     displayPillars(pillars);
 
-    if (isUndo) {
-        swapNumbers(oldPillar, targetPillar);
-        // for recording history
+    if (!moveType.isRedo & !moveType.isUndo & undoUsed) {
+        clearHistory(history.frontHistory);
+        undoUsed = false;
 
     }
 
-    history.push({oldPillar, targetPillar});
+    if (moveType.isUndo) {
+        swapNumbers(oldPillar, targetPillar);
+        history.frontHistory.push({oldPillar, targetPillar});
+        undoUsed = true;
+        // for recording history
+
+    } else {
+        history.backHistory.push({oldPillar, targetPillar});
+
+    }
+
 }
 
 void solvePuzzle() {
@@ -228,19 +255,22 @@ void solvePuzzle() {
     std::cout <<'\n';
 }
 
-void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, std::stack<Event> &utilizedHistory, std::stack<Event> &affectedHistory, bool &undoUsed, bool isRedo=false) {
+void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, History &history, bool &undoUsed, MoveType moveType) {
+    std::stack<Event> &utilizedHistory = ((moveType.isRedo) ? history.frontHistory : history.backHistory);
+    std::stack<Event> &affectedHistory = ((moveType.isRedo) ? history.frontHistory : history.frontHistory);
+    
     if (repeatAmount > utilizedHistory.size()) {
         repeatAmount = utilizedHistory.size();
 
         if (repeatAmount == 0) {
-            displayError((isRedo) ? redoEmpty : undoEmpty);
+            displayError((moveType.isRedo) ? redoEmpty : undoEmpty);
             return;
         }
 
-        std::cout << "Can only " << ((isRedo) ? "redo" : "undo" ) << " " << repeatAmount << " actions" << ((repeatAmount > 1) ? "s" : "") << "..." << '\n';
+        std::cout << "Can only " << ((moveType.isRedo) ? "redo" : "undo" ) << " " << repeatAmount << " action" << ((repeatAmount > 1) ? "s" : "") << "..." << '\n';
 
     } else {
-        std::cout << ((isRedo) ? "Redo" : "Undo") << "ing " << repeatAmount << " action" << ((repeatAmount > 1) ? "s" : "") << "..." << '\n';
+        std::cout << ((moveType.isRedo) ? "Redo" : "Undo") << "ing " << repeatAmount << " action" << ((repeatAmount > 1) ? "s" : "") << "..." << '\n';
     
     }
 
@@ -253,7 +283,7 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pi
         int oldPillar = utilizedHistory.top().oldPillar;
         int targetPillar = utilizedHistory.top().targetPillar;
 
-        moveRing(pillars, oldPillar, targetPillar, affectedHistory, undoUsed, !isRedo);
+        moveRing(pillars, oldPillar, targetPillar, history, undoUsed, moveType);
         utilizedHistory.pop();  
         /////std::cout << "Time Travel" << counter << '\n';
         /////displayHistory(utilizedHistory);
@@ -262,11 +292,12 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pi
     }
 }
 
-void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, std::stack<Event> &backHistory, std::stack<Event> &frontHistory, bool &undoUsed) {
+void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, History history, bool &undoUsed) {
     std::stringstream inputStream(input);
     std::string variable;
     std::string inputArray[64];
     int variableCounter{0};
+    MoveType moveType;
 
     std::cout << '\n';
 
@@ -282,6 +313,7 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
         solvePuzzle();
     
     } else if (inputArray[0] == "-m" | inputArray[0] == "--move") {
+
         if (!isdigit(inputArray[1]) | !isdigit(inputArray[2])) {
             displayError(notInteger);
             return;
@@ -290,9 +322,11 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
         int oldPillar = convertStringToInt(inputArray[1]);
         int targetPillar = convertStringToInt(inputArray[2]);
 
-        moveRing(pillars, --oldPillar, --targetPillar, backHistory, undoUsed);
+        moveRing(pillars, --oldPillar, --targetPillar, history, undoUsed, moveType);
     
     } else if (inputArray[0] == "-u" | inputArray[0] == "--undo") {
+        moveType.isUndo = true;
+
         if (inputArray[1].size() == 0) {
             inputArray[1] = "1";
         }
@@ -304,9 +338,11 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
 
         int repeatAmount = convertStringToInt(inputArray[1]);
 
-        timeTravel(repeatAmount, pillars, backHistory, frontHistory, undoUsed);
+        timeTravel(repeatAmount, pillars, history, undoUsed, moveType);
         
     } else if (inputArray[0] == "-r" | inputArray[0] == "--redo") {
+        moveType.isRedo = true;
+
         if (inputArray[1].size() == 0) {
             inputArray[1] = "1";
         }
@@ -318,7 +354,7 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
 
         int repeatAmount = convertStringToInt(inputArray[1]);
 
-        timeTravel(repeatAmount, pillars, frontHistory, backHistory, undoUsed, true);
+        timeTravel(repeatAmount, pillars, history, undoUsed, moveType);
 
     } else {
         displayError(invalidCommand);
@@ -331,7 +367,7 @@ int main () {
     std::stack<Event> frontHistory;
     std::stack<Event> backHistory;
     History history {frontHistory, backHistory};
-    
+
     std::string userPrompt;
     bool undoUsed = false;
     // for clearing frontHistory if an new move is made after undoing
@@ -346,7 +382,7 @@ int main () {
         std::cout << ">> ";
         getline(std::cin, userPrompt);
 
-        parseInput(userPrompt, pillars, backHistory, frontHistory, undoUsed);
+        parseInput(userPrompt, pillars, history, undoUsed);
     }
 
 
