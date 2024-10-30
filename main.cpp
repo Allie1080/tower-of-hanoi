@@ -22,18 +22,20 @@ struct MoveType {
     bool isRedo{false};
 };
 
-const int PILLAR_MAX_SIZE = 7; 
-const int PILLAR_AMOUNT = 4;
+const int PILLAR_MAX_SIZE = 5; 
+const int PILLAR_AMOUNT = 3;
 
 const std::string cannotStack = "You cannot stack a bigger ring onto a smaller ring!";
 const std::string invalidCommand = "Invalid command!";
+const std::string notEnoughArguments = "Not enough arguments!";
 const std::string notInteger = "The provided arguments are not integers!";
 const std::string pillarEmpty = "That pillar is empty!";
 const std::string pillarFull = "That pillar is already full!";
 const std::string pillarOutOfRange = "That pillar is out of range!";
 const std::string redoEmpty = "There is nothing to redo!";
-const std::string undoEmpty = "There is nothing to undo!";
+const std::string samePillar = "That's the same pillar!";
 const std::string tooManyArguments = "Too many arguments!";
+const std::string undoEmpty = "There is nothing to undo!";
 // error messages
 
 void delay(int milliseconds) {
@@ -80,6 +82,7 @@ void swapNumbers (int &num1, int &num2) {
 
 void displayHistory(std::stack<Event> history) {
     // mostly just for debugging
+    // I could have just made this a method... Whatever
 
     if (history.empty()) {
         return;
@@ -213,6 +216,10 @@ void moveRing (std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, int oldPilla
         displayError(pillarOutOfRange);
         return;
 
+    } else if (oldPillar == targetPillar) {
+        displayError(samePillar);
+        return;
+
     } else if (pillars[oldPillar].empty()) {
         displayError(pillarEmpty);
         return;
@@ -292,6 +299,23 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pi
     }
 }
 
+bool isIncorrectArgumentAmount (std::string arguments[], int minimumArguments, int maximumArguments) {
+    /////std::cout << (arguments[1 + maximumArguments].size() != 0) << (arguments[minimumArguments].size() == 0) << '\n';
+
+    if (arguments[++maximumArguments].size() != 0) {
+        displayError(tooManyArguments);
+        return true;
+
+    } else if (arguments[minimumArguments].size() == 0) {
+        displayError(notEnoughArguments);            
+        return true;
+
+    }
+
+    return false;
+
+}
+
 void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &pillars, History history, bool &undoUsed) {
     std::stringstream inputStream(input);
     std::string variable;
@@ -306,53 +330,72 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
             displayError(tooManyArguments);
             return;
         }
+
         inputArray[variableCounter++] = variable; 
     }
 
     if (inputArray[0] == "-s" | inputArray[0] == "--solve") {
+        if (isIncorrectArgumentAmount(inputArray, 1, 1)) {
+            return;
+
+        }
+
         solvePuzzle();
     
     } else if (inputArray[0] == "-m" | inputArray[0] == "--move") {
+        int oldPillar;
+        int targetPillar;
 
-        if (!isdigit(inputArray[1]) | !isdigit(inputArray[2])) {
+        if (isIncorrectArgumentAmount(inputArray, 2, 2)) {
+            return;
+
+        } else if (!isdigit(inputArray[1]) | !isdigit(inputArray[2])) {
             displayError(notInteger);
             return;
         }
 
-        int oldPillar = convertStringToInt(inputArray[1]);
-        int targetPillar = convertStringToInt(inputArray[2]);
+        oldPillar = convertStringToInt(inputArray[1]);
+        targetPillar = convertStringToInt(inputArray[2]);
 
         moveRing(pillars, --oldPillar, --targetPillar, history, undoUsed, moveType);
     
     } else if (inputArray[0] == "-u" | inputArray[0] == "--undo") {
+        int repeatAmount;
         moveType.isUndo = true;
 
         if (inputArray[1].size() == 0) {
             inputArray[1] = "1";
         }
         
-        if (!isdigit(inputArray[1])) {
+        if (isIncorrectArgumentAmount(inputArray, 1, 1)) {
+            return;
+
+        } else if (!isdigit(inputArray[1])) {
             displayError(notInteger);
             return;
         }
 
-        int repeatAmount = convertStringToInt(inputArray[1]);
+        repeatAmount = convertStringToInt(inputArray[1]);
 
         timeTravel(repeatAmount, pillars, history, undoUsed, moveType);
         
     } else if (inputArray[0] == "-r" | inputArray[0] == "--redo") {
+        int repeatAmount;
         moveType.isRedo = true;
 
         if (inputArray[1].size() == 0) {
             inputArray[1] = "1";
         }
-        
-        if (!isdigit(inputArray[1])) {
+
+        if (isIncorrectArgumentAmount(inputArray, 1, 1)) {
+            return;
+
+        } else if (!isdigit(inputArray[1])) {
             displayError(notInteger);
             return;
         }
 
-        int repeatAmount = convertStringToInt(inputArray[1]);
+        repeatAmount = convertStringToInt(inputArray[1]);
 
         timeTravel(repeatAmount, pillars, history, undoUsed, moveType);
 
