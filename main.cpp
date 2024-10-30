@@ -372,7 +372,9 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
     }
 
     if (inputArray[0] == "-h" | inputArray[0] == "--help") {
-
+        if (isIncorrectArgumentAmount(inputArray, 0, 0)) {
+            return;
+        }
 
         displayGuide();
 
@@ -415,6 +417,15 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
 
     } else if (inputArray[0] == "-s" | inputArray[0] == "--solve") {
         int pillarOrder[3] = {1, 3, 2};
+        
+        if (isIncorrectArgumentAmount(inputArray, 0, 0)) {
+            return;
+
+        } else if (PILLAR_AMOUNT != 3) {
+            displayError(cannotUseAutoSolve);
+            return;
+            
+        }
 
         solvePuzzle(PILLAR_MAX_SIZE, pillars, history, undoUsed, moveType, pillarOrder);
     
