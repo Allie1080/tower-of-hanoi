@@ -320,7 +320,7 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pi
 
     std::cout << '\n';
 
-    delay(1000);
+    delay(500);
     
     for (int counter{0}; counter < repeatAmount; counter++) {
         std::cout << '\n';
@@ -332,7 +332,7 @@ void timeTravel(int repeatAmount, std::array<std::stack<int>, PILLAR_AMOUNT> &pi
         /////std::cout << "Time Travel" << counter << '\n';
         /////displayHistory(utilizedHistory);
         /////displayHistory(affectedHistory);
-        delay(250);
+        delay(150);
     }
 }
 
