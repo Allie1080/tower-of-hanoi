@@ -450,7 +450,7 @@ void parseInput (std::string input, std::array<std::stack<int>, PILLAR_AMOUNT> &
 
         timeTravel(repeatAmount, pillars, history, undoUsed, moveType);
         
-    } else if (inputArray[0] == "-x" | inputArray[0] == "-exit") {
+    } else if (inputArray[0] == "-x" | inputArray[0] == "--exit") {
         exit(0);
 
     } else {
